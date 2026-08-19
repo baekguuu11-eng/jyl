@@ -9,6 +9,11 @@ on:
     paths:
       - .github/workflows/admissions-total-500.yml
   workflow_dispatch:
+
+concurrency:
+  group: admissions-total-500-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
@@ -24,33 +29,32 @@ jobs:
         run: git clone --depth 1 --branch agent/admissions-archive-300 https://github.com/baekguuu11-eng/chatgpt.git collector
       - name: Install dependencies
         working-directory: collector
-        run: pip install requests beautifulsoup4 pypdf
+        run: pip install requests beautifulsoup4
       - name: Download official ADIGA 2028 archives
         working-directory: collector
         run: python admissions_archive/download_official_archives.py
-      - name: Download official ADIGA result compilations
+      - name: Collect exactly 500 unique target slots from official ADIGA university results
         working-directory: collector
-        run: python admissions_archive/download_adiga_results.py
-      - name: Collect exactly 500 unique target slots
-        working-directory: collector
-        run: python admissions_archive/fast_collect_total_500.py
+        run: python admissions_archive/collect_adiga_total_500.py
       - name: Validate 500 unique university-year slots
         working-directory: collector
         run: |
           python - <<'PY'
           import csv,json
           from pathlib import Path
-          r=Path('total500_output/total_500_slots')
+          r=Path('adiga500_output/admissions_total_500')
           rows=list(csv.DictReader((r/'slot_manifest.csv').open(encoding='utf-8-sig')))
           s=json.loads((r/'summary.json').read_text(encoding='utf-8'))
+          keys={(x['university'],int(x['admission_year'])) for x in rows}
           assert len(rows)==500,len(rows)
-          assert len({(x['university'],x['year']) for x in rows})==500
+          assert len(keys)==500,len(keys)
           assert s['selected_slots']==500
+          assert s['unique_slot_keys']==500
           print(json.dumps(s,ensure_ascii=False,indent=2))
           PY
       - name: Package result
         working-directory: collector
-        run: cd total500_output && zip -r -9 ../admissions-total-500-slots.zip total_500_slots
+        run: cd adiga500_output && zip -r -9 ../admissions-total-500-slots.zip admissions_total_500
       - uses: actions/upload-artifact@v4
         with:
           name: admissions-total-500-slots
