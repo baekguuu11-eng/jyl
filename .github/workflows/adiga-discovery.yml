@@ -1,33 +1,10 @@
 name: Discover official ADIGA result archives
 on:
-  push:
-    branches: [agent/admissions-total-500]
-    paths:
-      - .github/workflows/adiga-discovery.yml
-  pull_request:
-    branches: [main]
-    paths:
-      - .github/workflows/adiga-discovery.yml
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  discover:
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: git clone --depth 1 --branch agent/admissions-archive-300 https://github.com/baekguuu11-eng/chatgpt.git collector
-      - working-directory: collector
-        run: pip install requests
-      - working-directory: collector
-        run: python admissions_archive/discover_adiga_result_archives.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: adiga-result-archive-discovery
-          path: collector/adiga_discovery
-          if-no-files-found: error
-          retention-days: 7
+      - run: echo "Discovery completed previously; disabled during 500-slot build."
